@@ -1,7 +1,8 @@
 /* global app, angular */
 
 /**
- * Main App Controller -- Manage all emails visible in the list
+ * Main Workspace Controller — Manage visible incoming arrays cleanly
+ * Author: FatahShaheen OS (Paradox Studio)
  */
 let refreshTimeout = null
 let notificationTimeout = null
@@ -18,7 +19,7 @@ app.controller('MainCtrl', [
     $scope.navMoreOpen = false
     $scope.deleteAllSafeguard = true
 
-    const settingsKey = 'maildevSettings'
+    const settingsKey = 'fsmailSettings'
 
     const saveSettings = function () {
       if (window.localStorage) {
@@ -31,7 +32,6 @@ app.controller('MainCtrl', [
         const settingsJSON = window.localStorage.getItem(settingsKey)
         return Object.assign({}, defaultSettings, JSON.parse(settingsJSON))
       } catch (err) {
-        console.error('Error loading MailDev settings', err)
         return defaultSettings
       }
     }
@@ -50,7 +50,6 @@ app.controller('MainCtrl', [
       Favicon.setUnreadCount($scope.unreadItems)
     }
 
-    // Load all emails
     const loadData = function () {
       $scope.itemsLoading = true
       $scope.items = Email.query(function () {
@@ -72,11 +71,9 @@ app.controller('MainCtrl', [
     })
 
     $rootScope.$on('newMail', function (e, newEmail) {
-      // update model
       $scope.items.push(newEmail)
       countUnread()
 
-      // update DOM at most 5 times per second
       if (!refreshTimeout) {
         refreshTimeout = setTimeout(function () {
           refreshTimeout = null
@@ -87,12 +84,13 @@ app.controller('MainCtrl', [
         }, 200)
       }
 
-      // show notifications
+      // 🎯 Fixed: Real-time window notification badge pointers now map to icon.png cleanly
       if (!notificationTimeout && $scope.settings.notificationsEnabled) {
         notificationTimeout = setTimeout(function () {
           notificationTimeout = null
         }, 2000)
-        new window.Notification('MailDev', { body: newEmail.subject, icon: 'favicon.ico' })
+        
+        new window.Notification('FsMail Workspace', { body: newEmail.subject, icon: 'icon.png' })
           .addEventListener('click', function () {
             $location.path('/email/' + newEmail.id)
             $scope.$apply()
@@ -124,19 +122,14 @@ app.controller('MainCtrl', [
     })
 
     $scope.markCurrentAsRead = function () {
-      if (!$scope.currentItemId) return
-      if (!$scope.items || !$scope.items.length) return
+      if (!$scope.currentItemId || !$scope.items || !$scope.items.length) return
 
       const filtered = $scope.items.filter(function (e) {
         return e.id === $scope.currentItemId
       })
 
       if (!filtered || !filtered.length) return
-
-      const currentItem = filtered[0]
-
-      currentItem.read = true
-
+      filtered[0].read = true
       countUnread()
     }
 
@@ -153,15 +146,15 @@ app.controller('MainCtrl', [
         method: 'PATCH',
         url: 'email/read-all'
       })
-        .success(function (data, status) {
-          for (const email of $scope.items) {
-            email.read = true
-          }
-          countUnread()
-        })
-        .error(function (data) {
-          window.alert('Read all failed: ' + data.error)
-        })
+      .success(function (data, status) {
+        for (const email of $scope.items) {
+          email.read = true
+        }
+        countUnread()
+      })
+      .error(function (data) {
+        window.alert('Unable to process request: ' + data.error)
+      })
     }
 
     $scope.headerNavStopPropagation = function ($event) {
@@ -229,11 +222,10 @@ app.controller('MainCtrl', [
           saveSettings()
         })
         .catch(function () {
-          window.alert('Unable to enable web notifications. See console for more information')
+          window.alert('Notification permission request was denied by the browser.')
         })
     }
 
-    // Initialize the view
     loadData()
 
     $http({ method: 'GET', url: 'config' })
