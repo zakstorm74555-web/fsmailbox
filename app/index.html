@@ -3,64 +3,57 @@
     <head>
         <meta charset="utf-8"/>
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-        <title>MailDev{{ unreadItems > 0 ? ' (+' + unreadItems + ')' : '' }}</title>
-        <meta name="description" content="SMTP Server + Web Interface for viewing and testing emails during development.">
-        <meta name="viewport" content="width=device-width">
+        <title>FsMail Workspace{{ unreadItems > 0 ? ' (+' + unreadItems + ')' : '' }}</title>
+        <meta name="description" content="Professional sovereign messaging interface optimization panel.">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap">
         <link rel="stylesheet" href="styles/style.css">
-        <link rel="icon" id="favicon" />
+        <link rel="icon" id="favicon" type="image/png" href="icon.png" />
     </head>
-    <body ng-class="{'dark-theme': settings.darkThemeEnabled}">
-
-
-
+    <body ng-class="{'dark-theme': settings.darkThemeEnabled}" style="font-family: 'Plus Jakarta Sans', sans-serif;">
 
         <div class="application-container">
 
-
-
-
-
             <div class="sidebar">
-
 
                 <div class="sidebar-header">
                     <div class="brand-container">
                         <a class="brand ng-cloak" href="#/">
-                            <i class="fas fa-envelope"></i>
-                            <span class="brand-text">MailDev</span>
+                            <img src="icon.png" alt="FsMail" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 6px; object-contain: contain;">
+                            <span class="brand-text" style="font-weight: 700; letter-spacing: -0.5px;">FsMail</span>
                         </a>
-                        <span class="brand-unread ng-cloak" title="Total emails count (+ unread emails count)" ng-if="items && items.length" ng-click="toggleHeaderCountsUnread()">
+                        <span class="brand-unread ng-cloak" title="Total messages stream count" ng-if="items && items.length" ng-click="toggleHeaderCountsUnread()">
                             {{items.length}} {{ unreadItems > 0 ? ' (+' + unreadItems + ')' : '' }}
                         </span>
                     </div>
 
-                    <div class="header-nav  ng-cloak" >
+                    <div class="header-nav ng-cloak">
                         <ul class="header-nav-list">
                             <li class="header-nav-item">
-                                <a ng-click="refreshList()" href="" class="header-nav-item-link" title="Refresh emails">
+                                <a ng-click="refreshList()" href="" class="header-nav-item-link" title="Refresh inbox">
                                     <i class="fas fa-sync"></i>
                                 </a>
-                            </li>
+                            </li >
                             <li class="header-nav-item">
-                                <a ng-click="markReadAll()" href="" class="header-nav-item-link" title="Mark all emails as read">
+                                <a ng-click="markReadAll()" href="" class="header-nav-item-link" title="Mark all as read">
                                     <i class="fas fa-check-double"></i>
                                 </a>
                             </li>
                             <li class="header-nav-item">
-                                <a  ng-click="deleteAll()" href="" class="header-nav-item-link" title="Delete all emails">
+                                <a ng-click="deleteAll()" href="" class="header-nav-item-link" title="Clear folder content">
                                     <i ng-if="deleteAllSafeguard" class="fas fa-trash-alt"></i>
-                                    <i ng-if="!deleteAllSafeguard" class="fas fa-trash-alt danger"></i>
+                                    <i ng-if="!deleteAllSafeguard" class="fas fa-trash-alt danger" style="color: #ef4444 !important;"></i>
                                 </a>
                             </li>
                             <li class="header-nav-item">
-                                <a ng-click="toggleDarkTheme()" href="" class="header-nav-item-link" title="Toggle between light and dark theme">
-
+                                <a ng-click="toggleDarkTheme()" href="" class="header-nav-item-link" title="Toggle theme layout">
                                     <i ng-if="settings.darkThemeEnabled" class="fas fa-sun"></i>
                                     <i ng-if="!settings.darkThemeEnabled" class="fas fa-moon"></i>
                                 </a>
                             </li>
                             <li class="header-nav-item">
-                                <a ng-click="toggleNavMore($event)" href="" class="header-nav-item-link" title="Additional configuration">
+                                <a ng-click="toggleNavMore($event)" href="" class="header-nav-item-link" title="Settings">
                                     <i class="fas fa-cog"></i>
                                 </a>
                             </li>
@@ -69,73 +62,48 @@
                         <div class="header-nav-more" ng-click="headerNavStopPropagation($event)">
                             <ul class="dropdown-menu header-nav-more-menu" ng-class="{ open: navMoreOpen }">
                                 <li>
-                                    <label
-                                        class="header-nav-switch"
-                                        ng-class="{ disabled: !notificationsSupported }"
-                                        for="toggle-notifications"
-                                        title="Notifications are supported on localhost or via https">
-                                            <input
-                                            type="checkbox"
-                                            name="notifications"
-                                            id="toggle-notifications"
-                                            ng-disabled="!notificationsSupported"
-                                            ng-checked="settings.notificationsEnabled"
-                                            ng-click="toggleNotifications()"/>
-                                            Browser notifications
+                                    <label class="header-nav-switch" ng-class="{ disabled: !notificationsSupported }" for="toggle-notifications" title="Browser notifications">
+                                        <input type="checkbox" name="notifications" id="toggle-notifications" ng-disabled="!notificationsSupported" ng-checked="settings.notificationsEnabled" ng-click="toggleNotifications()"/>
+                                        Desktop notifications
                                     </label>
                                 </li>
                                 <li>
-                                    <label
-                                        class="header-nav-switch"
-                                        for="toggle-auto-show" >
-                                            <input
-                                            type="checkbox"
-                                            name="auto-show"
-                                            id="toggle-auto-show"
-                                            ng-checked="settings.autoShowEnabled"
-                                            ng-click="toggleAutoShow()"/>
-                                            Open new mail
+                                    <label class="header-nav-switch" for="toggle-auto-show">
+                                        <input type="checkbox" name="auto-show" id="toggle-auto-show" ng-checked="settings.autoShowEnabled" ng-click="toggleAutoShow()"/>
+                                        Auto-open new messages
                                     </label>
                                 </li>
                             </ul>
                         </div>
-
                     </div>
-
-
-
-
                 </div>
 
-
-
-
-                <div class="sidebar-emails-container ">
+                <div class="sidebar-emails-container">
                     <div class="search-container ng-cloak">
-                        <input type="text" ng-model="search" class="search-input" placeholder="Search...">
+                        <input type="text" ng-model="search" class="search-input" placeholder="Search mail...">
                         <i class="fas fa-search search-icon"></i>
                     </div>
                     <div class="sidebar-scrollable-content ng-cloak">
 
                         <div ng-if="itemsLoading" class="emails-loading">
-                            Loading...
+                            Syncing repository...
                         </div>
 
-                        <div ng-if="!itemsLoading && items && !items.length" class="emails-empty">
-                            No emails
+                        <div ng-if="!itemsLoading && items && !items.length" class="emails-empty" style="font-style: italic; font-size: 13px; text-align: center; padding-top: 2rem;">
+                            No messages inside this workspace.
                         </div>
 
                         <ul class="email-list">
-                            <li ng-repeat="item in items | orderBy:'time':!reverse | filter: search " class="email-item  email-{{item.id}} " ng-class="{current: item.id === currentItemId, read: item.read, unread: !item.read}">
+                            <li ng-repeat="item in items | orderBy:'time':!reverse | filter: search" class="email-item email-{{item.id}}" ng-class="{current: item.id === currentItemId, read: item.read, unread: !item.read}">
                                 <a href="#/email/{{item.id}}" class="email-item-link">
                                     <span class="title">
-                                        {{item.subject}}<span ng-hide="!item.attachments">&nbsp;<i class="fas fa-paperclip" ></i></span>
+                                        {{item.subject}}<span ng-hide="!item.attachments">&nbsp;<i class="fas fa-paperclip" style="font-size: 11px; opacity: 0.6;"></i></span>
                                         <span class="title-subline" title="{{item.to}}">
-                                            To:&nbsp;{{item.to.0.address}}&nbsp;<span ng-if="item.to.length > 1">+{{item.to.length-1}}</span>
+                                            From:&nbsp;{{item.from.0.name || item.from.0.address || 'External User'}}
                                         </span>
                                     </span>
                                     <span class="subline">
-                                        {{item.time | date:'yyyy-MM-dd HH:mm:ss (Z)' }}
+                                        Received: {{item.time | date:'hh:mm a | dd MMM yyyy'}}
                                     </span>
                                 </a>
                             </li>
@@ -145,20 +113,14 @@
 
             </div>
 
-
-
-
             <div class="main-container ng-cloak">
                 <div class="email-container" ng-view></div>
             </div>
 
-
-
         </div>
 
-
-
-
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+        
         <script src="components/angular/angular.min.js"></script>
         <script src="components/angular-resource/angular-resource.min.js"></script>
         <script src="components/angular-route/angular-route.min.js"></script>
