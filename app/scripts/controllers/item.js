@@ -1,7 +1,8 @@
 /* global angular, app, prompt */
 
 /**
- * Email item Controller -- The UI for the email pane
+ * Email Item Controller — FsMail Control Board
+ * Author: FatahShaheen OS (Paradox Studio)
  */
 
 app.controller('ItemCtrl', [
@@ -21,7 +22,7 @@ app.controller('ItemCtrl', [
     $http,
     $cookies
   ) {
-    // Get the item data by route parameter
+    // Fetch individual message structure safely
     const getItem = function () {
       Email.get(
         { id: $routeParams.itemId },
@@ -38,30 +39,30 @@ app.controller('ItemCtrl', [
           }
         },
         function () {
-          console.error('404: Email not found')
+          console.error('[FsMail Error] Requested message record not found.')
           $location.path('/')
         }
       )
     }
 
-    // Get email source
+    // Get message source code
     const getSource = function () {
       if (typeof $scope.rawEmail === 'undefined') {
         $scope.rawEmail = 'email/' + $scope.item.id + '/source'
       }
     }
 
-    // Prepares the iframe for interaction
+    // Prepares the text container window interaction
     const prepIframe = function () {
-      // Wait for iframe to load
       setTimeout(function () {
         const [iframe] = document.getElementsByTagName('iframe')
+        if (!iframe) return
+        
         const [head] = iframe.contentDocument.getElementsByTagName('head')
         const baseEl = iframe.contentDocument.createElement('base')
 
-        // Append <base target="_blank" /> to <head> in the iframe so all links open in new window
+        // Force all outward links inside message bodies to open safely in new tabs
         baseEl.setAttribute('target', '_blank')
-
         if (head) head.appendChild(baseEl)
 
         replaceMediaQueries(iframe)
@@ -73,39 +74,39 @@ app.controller('ItemCtrl', [
       }, 500)
     }
 
-    // Updates the iframe height so it matches it's content
-    // This prevents the iframe from having scrollbars
+    // Dynamic horizontal height compensation to clear inner scrollbars
     const fixIframeHeight = function (iframe) {
+      if (!iframe) return
       const body = iframe.contentDocument.getElementsByTagName('body')[0]
-      const newHeight = body.scrollHeight
-
-      iframe.height = newHeight
+      if (body) {
+        iframe.height = body.scrollHeight
+      }
     }
 
-    // Updates all media query rules to use 'width' instead of device width
+    // Formats layout queries to scale cleanly on mobile view screens
     const replaceMediaQueries = function (iframe) {
       angular.forEach(
         iframe.contentDocument.styleSheets,
         function (styleSheet) {
-          angular.forEach(styleSheet.cssRules, function (rule) {
-            if (rule.media && rule.media.mediaText) {
-              // TODO -- Add future warning if email doesn't use '[max|min]-device-width' media queries
-              rule.media.mediaText = rule.media.mediaText.replace(
-                'device-width',
-                'width'
-              )
-            }
-          })
+          try {
+            angular.forEach(styleSheet.cssRules, function (rule) {
+              if (rule.media && rule.media.mediaText) {
+                rule.media.mediaText = rule.media.mediaText.replace(
+                  'device-width',
+                  'width'
+                )
+              }
+            })
+          } catch (e) {
+            // Catches cross-domain iframe style policy security checks cleanly
+          }
         }
       )
     }
 
-    // NOTE: This is kind of a hack to get these dropdowns working. Should be revisited in the future
-    // Toggle a dropdown open/closed by toggling a class on the trigger itself
     $scope.toggleDropdown = function ($event, dropdownName) {
       $event.stopPropagation()
-      $scope.dropdownOpen =
-        dropdownName === $scope.dropdownOpen ? '' : dropdownName
+      $scope.dropdownOpen = dropdownName === $scope.dropdownOpen ? '' : dropdownName
     }
 
     function hideDropdown (e) {
@@ -124,92 +125,69 @@ app.controller('ItemCtrl', [
     addHideDropdownHandler(window)
 
     function validateEmail (email) {
-      const re =
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
       return re.test(email)
     }
 
-    // Toggle what format is viewable
     $scope.show = function (type) {
       if ((type === 'html' || type === 'attachments') && !$scope.item[type]) {
         return
       }
       if (type === 'source') getSource()
-
       $scope.panelVisibility = type
     }
 
-    // Sends a DELETE request to the server
     $scope.delete = function (item) {
       Email.delete({ id: item.id })
     }
 
-    // Updates iframe to have a width of newSize, i.e. '320px'
     $scope.resize = function (newSize) {
       const [iframe] = document.getElementsByTagName('iframe')
-      iframe.style.width = newSize || '100%'
-      fixIframeHeight()
+      if (iframe) {
+        iframe.style.width = newSize || '100%'
+        fixIframeHeight(iframe)
+      }
       $scope.iframeSize = newSize
     }
 
-    // Relay email to
+    // Forward message payload rule
     $scope.relayTo = function (item) {
       const lastRelayTo = $cookies.relayTo
-
-      const relayTo = prompt(
-        'Please enter email address to relay',
-        lastRelayTo
-      )
+      const relayTo = prompt('Enter the destination email address to forward this message:', lastRelayTo)
 
       if (relayTo) {
         if (validateEmail(relayTo)) {
           $scope.relay(item, relayTo)
           $cookies.relayTo = relayTo
         } else {
-          window.alert('The specified email address is not correct.')
+          window.alert('The specified email address format is not valid.')
         }
       }
     }
 
-    // Relay email
     $scope.relay = function (item, relayTo) {
       if (!$rootScope.config.isOutgoingEnabled) {
-        window.alert(
-          'Relay feature has not been configured.\n' +
-            'Run maildev --help for configuration info.'
-        )
+        window.alert('The outgoing forward relay service is not configured on this server.')
         return
       }
 
-      if (
-        window.confirm(
-          'Are you sure you want to REALLY SEND email to ' +
-            (relayTo ||
-              item.to
-                .map(function (to) {
-                  return to.address
-                })
-                .join()) +
-            ' through ' +
-            $rootScope.config.outgoingHost +
-            '?'
-        )
-      ) {
+      const confirmText = 'Are you sure you want to send this message directly to ' + 
+        (relayTo || item.to.map(function (to) { return to.address }).join()) + '?'
+
+      if (window.confirm(confirmText)) {
         $http({
           method: 'POST',
           url: 'email/' + item.id + '/relay' + (relayTo ? '/' + relayTo : '')
         })
-          .success(function (data, status) {
-            console.log('Relay result: ', data, status)
-            window.alert('Relay successful')
-          })
-          .error(function (data) {
-            window.alert('Relay failed: ' + data.error)
-          })
+        .success(function (data, status) {
+          window.alert('Message forwarded successfully.')
+        })
+        .error(function (data) {
+          window.alert('Forwarding failed: ' + data.error)
+        })
       }
     }
 
-    // Initialize the view by getting the email
     getItem()
   }
 ])
