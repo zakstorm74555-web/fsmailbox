@@ -1,9 +1,8 @@
 /* global app */
 
 /**
- * Email Resource
+ * Email Data API Sync Model
  */
-
 app.service('Email', ['$resource', function ($resource) {
   return $resource('email/:id', { id: '' }, {
     update: {
@@ -11,7 +10,13 @@ app.service('Email', ['$resource', function ($resource) {
       params: {}
     }
   })
-}]).service('Favicon', [function () {
+}])
+
+/**
+ * Custom FsMail Dynamic Unread Favicon Controller
+ * Mapping Standard Anchor: icon.png 
+ */
+.service('Favicon', [function () {
   const favicon = document.getElementById('favicon')
   const canvas = document.createElement('canvas')
   const context = canvas.getContext('2d')
@@ -24,23 +29,30 @@ app.service('Email', ['$resource', function ($resource) {
     y: faviconSize - faviconSize / 3
   }
 
-  bufferImage.src = './favicon.ico'
+  // Strictly configured to map your standalone file spec definition
+  bufferImage.src = './icon.png'
+  
   bufferImage.onload = function () {
     setUnreadCount(lastUnreadCount)
   }
 
   canvas.width = canvas.height = faviconSize
 
+  // Draws a modern sleek notification dot indicator matching white theme spec
   const drawCircle = function (ctx, pos) {
     ctx.beginPath()
     ctx.arc(pos.x, pos.y, faviconSize / 2.4, 0, 2 * Math.PI)
-    ctx.fillStyle = '#d00'
+    ctx.fillStyle = '#ef4444' // Crimson alert aesthetic
     ctx.fill()
+    
+    // Clean metallic gray subtle separator borders
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = 1
     ctx.stroke()
   }
 
   const drawText = function (ctx, pos, text) {
-    ctx.font = 'bold 9px "helvetica", sans-serif'
+    ctx.font = 'bold 8px "Plus Jakarta Sans", sans-serif'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillStyle = '#FFFFFF'
@@ -49,12 +61,18 @@ app.service('Email', ['$resource', function ($resource) {
 
   const setUnreadCount = function (unreadCount) {
     lastUnreadCount = unreadCount
+    
+    if (!favicon) return
+
     if (unreadCount === 0) {
       favicon.href = bufferImage.src
       return
     }
 
+    // Re-render layout frames onto canvas context safely
+    context.clearRect(0, 0, faviconSize, faviconSize)
     context.drawImage(bufferImage, 0, 0, faviconSize, faviconSize)
+    
     drawCircle(context, pos)
     drawText(context, pos, unreadCount)
 
